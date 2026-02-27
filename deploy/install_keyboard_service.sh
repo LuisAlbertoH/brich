@@ -34,6 +34,8 @@ RestartSec=2
 Environment=BTF_KEYBOARD_CONFIG=${REPO_DIR}/keyboard.txt
 Environment=BTF_LE_WAIT_MS=30000
 Environment=BTF_RESTART_DELAY_SEC=2
+Environment=BTF_TIMER_DS=1
+Environment=BTF_KEYBOARD_QUEUE=/tmp/brich_keyboard_queue
 StandardOutput=journal
 StandardError=journal
 

@@ -22,7 +22,39 @@ sudo sed -i 's/^XKBLAYOUT=.*/XKBLAYOUT="gb"/' /etc/default/keyboard
 sudo setupcon -k || true
 ```
 
-## 2) Preparar el repositorio
+## 2) Actualizar repositorio desde GitHub (en la Raspberry)
+
+Esta guia asume que ya tienes el repo clonado en la Pi.
+
+Ruta recomendada:
+
+- `/home/pi/brich`
+
+Actualizar a la ultima version del branch actual:
+
+```bash
+cd /home/pi/brich
+git branch --show-current
+git fetch origin
+git pull --ff-only origin "$(git branch --show-current)"
+```
+
+Verificar estado limpio despues del pull:
+
+```bash
+git status
+```
+
+Si `git pull` falla por cambios locales, usa este flujo:
+
+```bash
+cd /home/pi/brich
+git stash push -m "wip-before-keyboard-update"
+git pull --ff-only origin "$(git branch --show-current)"
+git stash pop
+```
+
+## 3) Preparar el repositorio
 
 Desde la carpeta del proyecto:
 
@@ -35,7 +67,7 @@ Verifica que exista:
 
 - `btfpy.so`
 
-## 3) Configurar `keyboard.txt`
+## 4) Configurar `keyboard.txt`
 
 Archivo:
 
@@ -47,7 +79,7 @@ Puntos clave:
 - La direccion puede quedar en `ADDRESS = LOCAL` en la primera ejecucion.
 - Si el script reporta que debes fijar direccion, usa la direccion indicada por el propio log.
 
-## 4) Prueba manual (antes de systemd)
+## 5) Prueba manual (antes de systemd)
 
 ```bash
 cd /ruta/a/brich
@@ -62,7 +94,7 @@ Resultado esperado:
 
 Detener prueba manual con `Ctrl+C`.
 
-## 5) Instalar como servicio automatico
+## 6) Instalar como servicio automatico
 
 Archivo instalador:
 
@@ -80,7 +112,7 @@ Esto crea e inicia:
 
 - `/etc/systemd/system/brich-keyboard.service`
 
-## 6) Operar el proceso
+## 7) Operar el proceso
 
 Estado:
 
@@ -112,7 +144,64 @@ Deshabilitar arranque automatico:
 sudo systemctl disable --now brich-keyboard.service
 ```
 
-## 7) Estabilidad y troubleshooting
+## 8) Operacion remota desde consola (SSH)
+
+Puedes enviar teclas al cliente BLE conectado sin teclado fisico local.
+
+Archivo de control:
+
+- `keyboard_ctl.py`
+
+Ejemplos:
+
+```bash
+cd /ruta/a/brich
+python3 keyboard_ctl.py text "hola mundo"
+python3 keyboard_ctl.py key ENTER
+python3 keyboard_ctl.py combo "CTRL+ALT+T"
+python3 keyboard_ctl.py combo "GUI+R"
+```
+
+Notas:
+
+- `combo` soporta modificadores: `CTRL`, `SHIFT`, `ALT`, `ALTGR`, `GUI` (`WIN`/`CMD`).
+- `key` soporta teclas como `ENTER`, `TAB`, `ESC`, `F1..F12`, flechas, etc.
+- Si no hay cliente BLE conectado, los comandos quedan en cola y se ejecutan al conectar.
+
+## 9) Macros personalizadas (automatizaciones)
+
+Archivo:
+
+- `keyboard_macros.json`
+
+Listar macros:
+
+```bash
+python3 keyboard_ctl.py list-macros
+```
+
+Ejecutar macro:
+
+```bash
+python3 keyboard_ctl.py macro open_terminal_linux
+python3 keyboard_ctl.py macro open_browser_example
+```
+
+Formato de macro:
+
+```json
+{
+  "mi_macro": [
+    "COMBO CTRL+L",
+    "TEXT https://mi-sitio.com",
+    "KEY ENTER",
+    "DELAY 300",
+    "COMBO CTRL+TAB"
+  ]
+}
+```
+
+## 10) Estabilidad y troubleshooting
 
 1. Si ves errores tipo "Attempting Classic connection" o "MIC failure":
 - elimina el emparejamiento HID viejo en el telefono/PC.

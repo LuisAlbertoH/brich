@@ -1,0 +1,24 @@
+{
+  "open_run_dialog": [
+    "COMBO GUI+R"
+  ],
+  "open_terminal_linux": [
+    "COMBO CTRL+ALT+T"
+  ],
+  "lock_screen_windows": [
+    "COMBO GUI+L"
+  ],
+  "open_task_manager": [
+    "COMBO CTRL+SHIFT+ESC"
+  ],
+  "open_browser_example": [
+    "COMBO CTRL+L",
+    "TEXT https://example.com",
+    "KEY ENTER"
+  ],
+  "type_and_submit_demo": [
+    "TEXT Hola desde Raspberry Pi",
+    "DELAY 200",
+    "KEY ENTER"
+  ]
+}

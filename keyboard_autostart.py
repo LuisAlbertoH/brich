@@ -126,9 +126,12 @@ def main():
     print("Starting keyboard auto service with config:", CONFIG_FILE)
     print("LE wait (ms):", LE_WAIT_MS)
 
+    initialized = False
+
     while True:
         try:
             init_server()
+            initialized = True
             retval = btfpy.Le_server(lecallback, 0)
             print("Le_server finished with code:", retval)
         except KeyboardInterrupt:
@@ -137,8 +140,14 @@ def main():
         except Exception as exc:
             print("Server error:", exc)
             traceback.print_exc()
+            # If initialization fails, exit and let systemd restart.
+            # Re-running Init_blue in the same process causes noisy loops.
+            if not initialized:
+                break
         finally:
-            btfpy.Close_all()
+            if initialized:
+                btfpy.Close_all()
+                initialized = False
 
         time.sleep(RESTART_DELAY_SEC)
 

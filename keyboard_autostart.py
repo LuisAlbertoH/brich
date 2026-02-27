@@ -298,10 +298,18 @@ def ensure_queue_dir():
         pass
 
 
-def run_quiet(cmd):
+def run_quiet(cmd, timeout_sec=3):
     try:
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        subprocess.run(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=timeout_sec,
+        )
     except FileNotFoundError:
+        pass
+    except subprocess.TimeoutExpired:
         pass
 
 
@@ -309,7 +317,6 @@ def prepare_adapter():
     # Best-effort recovery before btferret init.
     run_quiet(["rfkill", "unblock", "bluetooth"])
     run_quiet(["hciconfig", "hci0", "up"])
-    run_quiet(["btmgmt", "--index", "0", "power", "on"])
 
 
 def acquire_instance_lock():

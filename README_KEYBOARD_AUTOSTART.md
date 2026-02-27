@@ -54,6 +54,41 @@ git pull --ff-only origin "$(git branch --show-current)"
 git stash pop
 ```
 
+### Flujo recomendado si hay un dispositivo conectado durante pruebas
+
+No actualices con una instancia activa del teclado BLE. Primero desconecta y libera el adaptador.
+
+Opcion A (manual):
+
+```bash
+cd /home/pi/brich
+sudo systemctl stop brich-keyboard.service
+sudo pkill -f "python3 .*keyboard_autostart.py" || true
+sudo rfkill unblock bluetooth || true
+sudo hciconfig hci0 down || true
+sudo hciconfig hci0 up || true
+git fetch origin
+git pull --ff-only origin "$(git branch --show-current)"
+python3 btfpymake.py build
+sudo systemctl start brich-keyboard.service
+```
+
+Opcion B (automatizada, recomendada):
+
+```bash
+cd /home/pi/brich
+chmod +x deploy/update_keyboard_from_github.sh
+sudo ./deploy/update_keyboard_from_github.sh
+```
+
+Ese script:
+- detiene `brich-keyboard.service` (esto desconecta el cliente BLE),
+- mata procesos manuales colgados,
+- reinicia el adaptador Bluetooth,
+- actualiza el branch actual,
+- recompila `btfpy.so`,
+- vuelve a iniciar el servicio.
+
 ## 3) Preparar el repositorio
 
 Desde la carpeta del proyecto:
@@ -143,6 +178,10 @@ Deshabilitar arranque automatico:
 ```bash
 sudo systemctl disable --now brich-keyboard.service
 ```
+
+Importante:
+- No ejecutes `sudo python3 keyboard_autostart.py` si el servicio ya esta activo.
+- El script ahora usa un lock de instancia para evitar doble ejecucion.
 
 ## 8) Operacion remota desde consola (SSH)
 

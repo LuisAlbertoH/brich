@@ -1,5 +1,8 @@
 #!/usr/bin/python3
+import atexit
+import fcntl
 import os
+import subprocess
 import time
 import traceback
 from pathlib import Path
@@ -14,6 +17,7 @@ LE_WAIT_MS = int(os.environ.get("BTF_LE_WAIT_MS", "30000"))
 RESTART_DELAY_SEC = float(os.environ.get("BTF_RESTART_DELAY_SEC", "2"))
 TIMER_DS = int(os.environ.get("BTF_TIMER_DS", "1"))
 QUEUE_DIR = Path(os.environ.get("BTF_KEYBOARD_QUEUE", "/tmp/brich_keyboard_queue"))
+LOCK_FILE = Path(os.environ.get("BTF_KEYBOARD_LOCK", "/tmp/brich_keyboard.lock"))
 
 # Fixed random LE address (static random address).
 # Change this value if clients keep using stale cached identity.
@@ -36,6 +40,7 @@ hidinfo = [0x01, 0x11, 0x00, 0x02]
 reportindex = -1
 node = 0
 client_connected = False
+lock_handle = None
 
 MOD_LCTRL = 0x01
 MOD_LSHIFT = 0x02
@@ -293,6 +298,49 @@ def ensure_queue_dir():
         pass
 
 
+def run_quiet(cmd):
+    try:
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    except FileNotFoundError:
+        pass
+
+
+def prepare_adapter():
+    # Best-effort recovery before btferret init.
+    run_quiet(["rfkill", "unblock", "bluetooth"])
+    run_quiet(["hciconfig", "hci0", "up"])
+    run_quiet(["btmgmt", "--index", "0", "power", "on"])
+
+
+def acquire_instance_lock():
+    global lock_handle
+    LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+    lock_handle = LOCK_FILE.open("w", encoding="utf-8")
+    try:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError as exc:
+        raise RuntimeError(
+            "Another keyboard service instance is already running. "
+            "Stop brich-keyboard.service before starting manually."
+        ) from exc
+    lock_handle.seek(0)
+    lock_handle.write(str(os.getpid()))
+    lock_handle.truncate()
+    lock_handle.flush()
+
+
+def release_instance_lock():
+    global lock_handle
+    if lock_handle is None:
+        return
+    try:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
+    except OSError:
+        pass
+    lock_handle.close()
+    lock_handle = None
+
+
 def process_command_queue():
     # A command file can contain multiple lines, for example:
     # COMBO CTRL+L
@@ -348,6 +396,7 @@ def init_server():
     global node
     global reportindex
 
+    prepare_adapter()
     if btfpy.Init_blue(CONFIG_FILE) == 0:
         raise RuntimeError("Init_blue failed")
 
@@ -374,10 +423,14 @@ def init_server():
 
 
 def main():
+    acquire_instance_lock()
+    atexit.register(release_instance_lock)
+
     print("Starting keyboard auto service with config:", CONFIG_FILE)
     print("LE wait (ms):", LE_WAIT_MS)
     print("Timer (deci-seconds):", TIMER_DS)
     print("Queue dir:", str(QUEUE_DIR))
+    print("Lock file:", str(LOCK_FILE))
 
     initialized = False
 

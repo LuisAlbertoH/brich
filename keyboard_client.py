@@ -7,6 +7,7 @@ from pathlib import Path
 
 QUEUE_DIR = Path(os.environ.get("BTF_KEYBOARD_QUEUE", "/tmp/brich_keyboard_queue"))
 DEFAULT_MACROS_FILE = Path(os.environ.get("BTF_KEYBOARD_MACROS", "keyboard_macros.json"))
+STATUS_FILE = Path(os.environ.get("BTF_KEYBOARD_STATUS", "/tmp/brich_keyboard_status.json"))
 
 
 def ensure_queue_dir():
@@ -61,3 +62,64 @@ def service_state(service_name):
 
     state = result.stdout.strip()
     return state or "unknown"
+
+
+def _status_timestamp():
+    return time.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def read_status():
+    if not STATUS_FILE.exists():
+        return {
+            "state": "unknown",
+            "detail": "No status published yet",
+            "connected": False,
+            "updated_at": None,
+            "events": [],
+        }
+
+    try:
+        data = json.loads(STATUS_FILE.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError("Status file is not a JSON object")
+    except Exception:
+        return {
+            "state": "error",
+            "detail": "Status file could not be read",
+            "connected": False,
+            "updated_at": _status_timestamp(),
+            "events": [],
+        }
+
+    data.setdefault("state", "unknown")
+    data.setdefault("detail", "")
+    data.setdefault("connected", False)
+    data.setdefault("updated_at", None)
+    data.setdefault("events", [])
+    return data
+
+
+def write_status(state, detail, connected=False):
+    current = read_status()
+    events = current.get("events", [])
+    event = {
+        "at": _status_timestamp(),
+        "state": state,
+        "detail": detail,
+    }
+    events.append(event)
+    payload = {
+        "state": state,
+        "detail": detail,
+        "connected": bool(connected),
+        "updated_at": event["at"],
+        "events": events[-20:],
+    }
+
+    tmp = STATUS_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(payload), encoding="utf-8")
+    try:
+        os.chmod(tmp, 0o666)
+    except PermissionError:
+        pass
+    tmp.replace(STATUS_FILE)

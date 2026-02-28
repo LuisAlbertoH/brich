@@ -1,6 +1,11 @@
 const serviceState = document.getElementById("serviceState");
 const queueCount = document.getElementById("queueCount");
 const accessInfo = document.getElementById("accessInfo");
+const pairingState = document.getElementById("pairingState");
+const pairingDetail = document.getElementById("pairingDetail");
+const pairingUpdated = document.getElementById("pairingUpdated");
+const localhostInfo = document.getElementById("localhostInfo");
+const eventLog = document.getElementById("eventLog");
 const macroList = document.getElementById("macroList");
 const toast = document.getElementById("toast");
 
@@ -43,11 +48,43 @@ function buildAccessInfo(status) {
   return urls.join("  |  ");
 }
 
+function renderEvents(events) {
+  if (!events || events.length === 0) {
+    eventLog.innerHTML = '<p class="muted">Sin eventos publicados.</p>';
+    return;
+  }
+
+  eventLog.innerHTML = "";
+  [...events].reverse().forEach((event) => {
+    const item = document.createElement("article");
+    item.className = "event-item";
+
+    const meta = document.createElement("div");
+    meta.className = "event-meta";
+    meta.innerHTML = `<span>${event.at || "-"}</span><span>${event.state || "-"}</span>`;
+
+    const detail = document.createElement("div");
+    detail.className = "event-detail";
+    detail.textContent = event.detail || "";
+
+    item.appendChild(meta);
+    item.appendChild(detail);
+    eventLog.appendChild(item);
+  });
+}
+
 async function refreshStatus() {
   const status = await api("/api/status");
   serviceState.textContent = status.keyboard_service;
   queueCount.textContent = String(status.queue_pending);
   accessInfo.textContent = buildAccessInfo(status);
+  localhostInfo.textContent = status.local_url || "http://127.0.0.1:8080";
+
+  const pairing = status.pairing || {};
+  pairingState.textContent = pairing.state || "unknown";
+  pairingDetail.textContent = pairing.detail || "-";
+  pairingUpdated.textContent = pairing.updated_at || "-";
+  renderEvents(pairing.events || []);
 }
 
 async function loadMacros() {

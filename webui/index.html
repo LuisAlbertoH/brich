@@ -32,6 +32,38 @@
       </article>
     </section>
 
+    <section class="status-monitor">
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Monitor de emparejamiento</h2>
+          <span>Estado del daemon BLE</span>
+        </div>
+        <div class="monitor-grid">
+          <div class="monitor-card">
+            <span class="label">Estado BLE</span>
+            <strong id="pairingState">cargando...</strong>
+          </div>
+          <div class="monitor-card">
+            <span class="label">Detalle</span>
+            <strong id="pairingDetail">cargando...</strong>
+          </div>
+          <div class="monitor-card">
+            <span class="label">Ultima actualizacion</span>
+            <strong id="pairingUpdated">-</strong>
+          </div>
+          <div class="monitor-card">
+            <span class="label">URL para escritorio remoto</span>
+            <strong id="localhostInfo">http://127.0.0.1:8080</strong>
+          </div>
+        </div>
+        <div class="event-log-wrap">
+          <div id="eventLog" class="event-log">
+            <p class="muted">Cargando eventos...</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
     <section class="grid">
       <article class="panel panel-text">
         <div class="panel-head">

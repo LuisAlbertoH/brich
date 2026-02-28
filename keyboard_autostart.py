@@ -8,6 +8,7 @@ import traceback
 from pathlib import Path
 
 import btfpy
+from keyboard_client import write_status
 
 # Dedicated keyboard daemon for Raspberry Pi (auto-start friendly).
 # It keeps the LE server alive and reinitializes on unexpected exits.
@@ -315,6 +316,7 @@ def run_quiet(cmd, timeout_sec=3):
 
 def prepare_adapter():
     # Best-effort recovery before btferret init.
+    write_status("adapter_prepare", "Preparing Bluetooth adapter", connected=False)
     run_quiet(["rfkill", "unblock", "bluetooth"])
     run_quiet(["hciconfig", "hci0", "up"])
 
@@ -374,6 +376,7 @@ def lecallback(clientnode, op, cticn):
 
     if op == btfpy.LE_CONNECT:
         client_connected = True
+        write_status("connected", f"BLE client connected (node {clientnode})", connected=True)
         print("Client connected. Keyboard events enabled.")
         print("F10 sends 'Hello' + Enter. Remote queue is active.")
         process_command_queue()
@@ -393,6 +396,7 @@ def lecallback(clientnode, op, cticn):
     elif op == btfpy.LE_DISCONNECT:
         # Keep process alive and wait for the next connection.
         client_connected = False
+        write_status("waiting_for_pairing", "Client disconnected. Waiting for reconnection", connected=False)
         print("Client disconnected. Waiting for reconnection...")
         return btfpy.SERVER_CONTINUE
 
@@ -405,10 +409,12 @@ def init_server():
 
     prepare_adapter()
     if btfpy.Init_blue(CONFIG_FILE) == 0:
+        write_status("init_failed", "Init_blue failed", connected=False)
         raise RuntimeError("Init_blue failed")
 
     if btfpy.Localnode() != 1:
         local_addr = btfpy.Device_address(btfpy.Localnode())
+        write_status("config_error", "Local node is not node 1", connected=False)
         raise RuntimeError(
             "Local node is not node 1. Edit keyboard.txt ADDRESS with local address: " + local_addr
         )
@@ -418,6 +424,7 @@ def init_server():
     uuid = [0x2A, 0x4D]
     reportindex = btfpy.Find_ctic_index(node, btfpy.UUID_2, uuid)
     if reportindex < 0:
+        write_status("config_error", "Report characteristic 2A4D not found", connected=False)
         raise RuntimeError("Failed to find Report characteristic (UUID 2A4D)")
 
     write_local_hid_characteristics()
@@ -427,11 +434,13 @@ def init_server():
     btfpy.Keys_to_callback(btfpy.KEY_ON, 0)
     btfpy.Set_le_wait(LE_WAIT_MS)
     btfpy.Le_pair(btfpy.Localnode(), btfpy.JUST_WORKS, 0)
+    write_status("waiting_for_pairing", "Keyboard ready. Waiting for BLE pairing/connection", connected=False)
 
 
 def main():
     acquire_instance_lock()
     atexit.register(release_instance_lock)
+    write_status("starting", "Keyboard service starting", connected=False)
 
     print("Starting keyboard auto service with config:", CONFIG_FILE)
     print("LE wait (ms):", LE_WAIT_MS)
@@ -448,9 +457,11 @@ def main():
             retval = btfpy.Le_server(lecallback, TIMER_DS)
             print("Le_server finished with code:", retval)
         except KeyboardInterrupt:
+            write_status("stopped", "Keyboard service interrupted", connected=False)
             print("Interrupted. Exiting.")
             break
         except Exception as exc:
+            write_status("error", str(exc), connected=False)
             print("Server error:", exc)
             traceback.print_exc()
             # If initialization fails, exit and let systemd restart.
@@ -460,6 +471,7 @@ def main():
         finally:
             if initialized:
                 btfpy.Close_all()
+                write_status("restarting", "Server loop ended. Restarting if needed", connected=False)
                 initialized = False
 
         time.sleep(RESTART_DELAY_SEC)

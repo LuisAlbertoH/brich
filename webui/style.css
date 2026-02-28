@@ -40,6 +40,7 @@ textarea {
 
 .hero,
 .status-strip,
+.status-monitor,
 .panel,
 .footer-bar {
   animation: rise 0.35s ease both;
@@ -80,6 +81,10 @@ h1 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 18px;
+}
+
+.status-monitor {
+  margin-bottom: 14px;
 }
 
 .status-card,
@@ -244,6 +249,51 @@ button:focus-visible {
   gap: 10px;
 }
 
+.monitor-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.monitor-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(16, 32, 24, 0.08);
+}
+
+.event-log-wrap {
+  margin-top: 14px;
+}
+
+.event-log {
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.event-item {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(16, 32, 24, 0.08);
+}
+
+.event-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin-bottom: 4px;
+}
+
+.event-detail {
+  font-size: 0.95rem;
+}
+
 .combo-builder {
   display: grid;
   gap: 12px;
@@ -301,6 +351,7 @@ button:focus-visible {
 @media (max-width: 820px) {
   .hero,
   .status-strip,
+  .monitor-grid,
   .grid {
     grid-template-columns: 1fr;
   }

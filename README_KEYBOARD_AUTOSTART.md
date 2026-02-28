@@ -261,6 +261,12 @@ chmod +x deploy/install_keyboard_web_service.sh
 sudo ./deploy/install_keyboard_web_service.sh
 ```
 
+Ese instalador tambien crea un acceso directo de escritorio que abre:
+
+```text
+http://127.0.0.1:8080
+```
+
 Ver estado:
 
 ```bash
@@ -289,13 +295,26 @@ Ejemplo:
 http://192.168.1.35:8080
 ```
 
+Si estas dentro de Raspberry Connect Screen Sharing o escritorio remoto sobre la propia Pi, usa:
+
+```text
+http://127.0.0.1:8080
+```
+
+o abre el acceso directo:
+
+```text
+Brich Keyboard Web
+```
+
 La UI incluye:
 
 - envio de texto,
 - flechas y teclas basicas,
 - atajos frecuentes,
 - combos personalizados,
-- botones de macros definidos en `keyboard_macros.json`.
+- botones de macros definidos en `keyboard_macros.json`,
+- monitor de emparejamiento con eventos recientes del daemon BLE.
 
 Importante:
 
@@ -342,3 +361,18 @@ sudo ss -ltnp | grep 8080
 ```
 
 - verifica firewall o aislamiento Wi-Fi en tu red local.
+
+5. Si la interfaz no abre dentro de Raspberry Connect Screen Sharing:
+- prueba `http://127.0.0.1:8080` en lugar de la IP LAN.
+- reinstala el acceso directo si hace falta:
+
+```bash
+cd /home/pi/brich
+sudo ./deploy/install_keyboard_web_service.sh
+```
+
+- revisa el servicio web:
+
+```bash
+sudo journalctl -u brich-keyboard-web.service -n 80 --no-pager
+```

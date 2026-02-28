@@ -8,7 +8,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from keyboard_client import DEFAULT_MACROS_FILE, enqueue_lines, load_macros, pending_command_count, service_state
+from keyboard_client import (
+    DEFAULT_MACROS_FILE,
+    enqueue_lines,
+    load_macros,
+    pending_command_count,
+    read_status,
+    service_state,
+)
 
 HOST = os.environ.get("BTF_WEB_HOST", "0.0.0.0")
 PORT = int(os.environ.get("BTF_WEB_PORT", "8080"))
@@ -37,6 +44,7 @@ def get_local_addresses():
 
 def status_payload():
     macros = load_macros(DEFAULT_MACROS_FILE)
+    pairing = read_status()
     return {
         "keyboard_service": service_state(KEYBOARD_SERVICE),
         "queue_pending": pending_command_count(),
@@ -44,6 +52,8 @@ def status_payload():
         "hostname": socket.gethostname(),
         "addresses": get_local_addresses(),
         "port": PORT,
+        "local_url": f"http://127.0.0.1:{PORT}",
+        "pairing": pairing,
     }
 
 

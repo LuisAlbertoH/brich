@@ -83,11 +83,12 @@ sudo ./deploy/update_keyboard_from_github.sh
 
 Ese script:
 - detiene `brich-keyboard.service` (esto desconecta el cliente BLE),
+- detiene `brich-keyboard-web.service` si esta instalado,
 - mata procesos manuales colgados,
 - reinicia el adaptador Bluetooth,
 - actualiza el branch actual,
 - recompila `btfpy.so`,
-- vuelve a iniciar el servicio.
+- vuelve a iniciar los servicios.
 
 ## 3) Preparar el repositorio
 
@@ -240,7 +241,69 @@ Formato de macro:
 }
 ```
 
-## 10) Estabilidad y troubleshooting
+## 10) Interfaz web local para celular
+
+La interfaz web corre como un cliente separado. No usa Bluetooth directo: solo escribe comandos a la misma cola que usa `keyboard_ctl.py`.
+
+Archivos:
+
+- `keyboard_web.py`
+- `webui/index.html`
+- `webui/style.css`
+- `webui/app.js`
+- `deploy/install_keyboard_web_service.sh`
+
+Instalacion:
+
+```bash
+cd /home/pi/brich
+chmod +x deploy/install_keyboard_web_service.sh
+sudo ./deploy/install_keyboard_web_service.sh
+```
+
+Ver estado:
+
+```bash
+sudo systemctl status brich-keyboard-web.service
+sudo journalctl -u brich-keyboard-web.service -f
+```
+
+Acceso desde el celular:
+
+1. Conecta el celular a la misma red local que la Raspberry.
+2. Obten la IP de la Pi:
+
+```bash
+hostname -I
+```
+
+3. Abre en el navegador del celular:
+
+```text
+http://IP_DE_LA_RASPBERRY:8080
+```
+
+Ejemplo:
+
+```text
+http://192.168.1.35:8080
+```
+
+La UI incluye:
+
+- envio de texto,
+- flechas y teclas basicas,
+- atajos frecuentes,
+- combos personalizados,
+- botones de macros definidos en `keyboard_macros.json`.
+
+Importante:
+
+- La web UI y `keyboard_ctl.py` pueden coexistir.
+- El backend BLE sigue siendo `brich-keyboard.service`.
+- Si el teclado BLE no esta conectado, la web sigue aceptando comandos y los deja en cola.
+
+## 11) Estabilidad y troubleshooting
 
 1. Si ves errores tipo "Attempting Classic connection" o "MIC failure":
 - elimina el emparejamiento HID viejo en el telefono/PC.
@@ -264,3 +327,18 @@ sudo systemctl stop bluetooth
 ```
 
 Nota: al monopolizar el adaptador BLE para HID, otros usos Bluetooth locales pueden dejar de funcionar.
+
+4. Si la interfaz web no abre en el celular:
+- confirma que el servicio web este activo:
+
+```bash
+sudo systemctl status brich-keyboard-web.service
+```
+
+- revisa el puerto:
+
+```bash
+sudo ss -ltnp | grep 8080
+```
+
+- verifica firewall o aislamiento Wi-Fi en tu red local.

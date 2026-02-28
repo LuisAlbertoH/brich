@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brich Remote Keyboard</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Brich local web client</p>
+        <h1>Remote Keyboard Deck</h1>
+        <p class="subtitle">Controla el teclado BLE desde tu celular sin tocar el backend Bluetooth.</p>
+      </div>
+      <button id="refreshStatus" class="ghost">Actualizar estado</button>
+    </section>
+
+    <section class="status-strip">
+      <article class="status-card">
+        <span class="label">Servicio teclado</span>
+        <strong id="serviceState">cargando...</strong>
+      </article>
+      <article class="status-card">
+        <span class="label">Comandos pendientes</span>
+        <strong id="queueCount">0</strong>
+      </article>
+      <article class="status-card status-wide">
+        <span class="label">Acceso local</span>
+        <strong id="accessInfo">cargando...</strong>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="panel panel-text">
+        <div class="panel-head">
+          <h2>Texto</h2>
+          <span>Escribe y envia</span>
+        </div>
+        <textarea id="textInput" rows="5" placeholder="Escribe aqui el texto que quieres enviar al dispositivo BLE..."></textarea>
+        <label class="check">
+          <input id="appendEnter" type="checkbox">
+          <span>Agregar Enter al final</span>
+        </label>
+        <div class="action-row">
+          <button id="sendText" class="primary">Enviar texto</button>
+          <button id="clearText" class="ghost">Limpiar</button>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Navegacion</h2>
+          <span>Flechas y basicos</span>
+        </div>
+        <div class="nav-pad">
+          <button data-key="UP">Arriba</button>
+          <button data-key="LEFT">Izquierda</button>
+          <button data-key="ENTER" class="accent">Enter</button>
+          <button data-key="RIGHT">Derecha</button>
+          <button data-key="DOWN">Abajo</button>
+        </div>
+        <div class="chip-row">
+          <button data-key="TAB">Tab</button>
+          <button data-key="ESC">Esc</button>
+          <button data-key="BACKSPACE">Backspace</button>
+          <button data-key="SPACE">Espacio</button>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Atajos</h2>
+          <span>Combinaciones frecuentes</span>
+        </div>
+        <div class="shortcut-grid">
+          <button data-combo="CTRL+C">Ctrl+C</button>
+          <button data-combo="CTRL+V">Ctrl+V</button>
+          <button data-combo="CTRL+X">Ctrl+X</button>
+          <button data-combo="CTRL+Z">Ctrl+Z</button>
+          <button data-combo="CTRL+A">Ctrl+A</button>
+          <button data-combo="CTRL+S">Ctrl+S</button>
+          <button data-combo="ALT+TAB">Alt+Tab</button>
+          <button data-combo="SHIFT+F10">Menu contextual</button>
+          <button data-combo="GUI+R">Win+R</button>
+          <button data-combo="CTRL+ALT+T">Terminal</button>
+          <button data-combo="CTRL+SHIFT+ESC">Task Manager</button>
+          <button data-combo="GUI+L">Bloquear pantalla</button>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Combo libre</h2>
+          <span>Para pruebas rapidas</span>
+        </div>
+        <div class="combo-builder">
+          <div class="toggle-group">
+            <label><input type="checkbox" value="CTRL">Ctrl</label>
+            <label><input type="checkbox" value="SHIFT">Shift</label>
+            <label><input type="checkbox" value="ALT">Alt</label>
+            <label><input type="checkbox" value="GUI">Win</label>
+          </div>
+          <input id="comboKey" type="text" maxlength="12" placeholder="Tecla (ej. T, F5, LEFT, ENTER)">
+          <button id="sendCombo" class="primary">Enviar combo</button>
+        </div>
+      </article>
+
+      <article class="panel panel-macros">
+        <div class="panel-head">
+          <h2>Macros</h2>
+          <span>Botones desde `keyboard_macros.json`</span>
+        </div>
+        <div id="macroList" class="macro-list">
+          <p class="muted">Cargando macros...</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="footer-bar">
+      <div id="toast" class="toast" hidden></div>
+      <p>Usa esta interfaz solo en tu red local de confianza.</p>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

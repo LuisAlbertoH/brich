@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SERVICE_NAME="brich-keyboard.service"
+WEB_SERVICE_NAME="brich-keyboard-web.service"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
@@ -21,6 +22,7 @@ fi
 
 echo "[1/6] Stopping keyboard service (disconnects active BLE client)..."
 systemctl stop "${SERVICE_NAME}" || true
+systemctl stop "${WEB_SERVICE_NAME}" || true
 
 echo "[2/6] Stopping stray manual keyboard processes..."
 pkill -f "python3 .*keyboard_autostart.py" || true
@@ -43,6 +45,8 @@ echo "[6/6] Starting keyboard service..."
 systemctl daemon-reload
 systemctl start "${SERVICE_NAME}"
 systemctl enable "${SERVICE_NAME}" >/dev/null 2>&1 || true
+systemctl start "${WEB_SERVICE_NAME}" || true
+systemctl enable "${WEB_SERVICE_NAME}" >/dev/null 2>&1 || true
 
 echo
 echo "Update complete."

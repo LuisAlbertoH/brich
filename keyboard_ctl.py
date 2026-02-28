@@ -1,41 +1,9 @@
 #!/usr/bin/python3
 import argparse
-import json
-import os
 import sys
-import time
 from pathlib import Path
 
-QUEUE_DIR = Path(os.environ.get("BTF_KEYBOARD_QUEUE", "/tmp/brich_keyboard_queue"))
-DEFAULT_MACROS_FILE = Path(os.environ.get("BTF_KEYBOARD_MACROS", "keyboard_macros.json"))
-
-
-def ensure_queue_dir():
-    QUEUE_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def enqueue_lines(lines):
-    ensure_queue_dir()
-    ts = time.time_ns()
-    cmd_file = QUEUE_DIR / f"{ts}_{os.getpid()}.cmd"
-    data = "\n".join(lines) + "\n"
-    cmd_file.write_text(data, encoding="utf-8")
-    try:
-        os.chmod(cmd_file, 0o666)
-    except PermissionError:
-        pass
-    print("Queued:", cmd_file)
-
-
-def load_macros(path):
-    if not path.exists():
-        raise FileNotFoundError(
-            f"Macros file not found: {path}. Create it from keyboard_macros.json sample."
-        )
-    obj = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(obj, dict):
-        raise ValueError("Macros file must be a JSON object: {\"macro_name\": [\"COMMAND ...\"]}")
-    return obj
+from keyboard_client import DEFAULT_MACROS_FILE, enqueue_lines, load_macros
 
 
 def main():
@@ -72,11 +40,11 @@ def main():
 
     try:
         if args.cmd == "text":
-            enqueue_lines([f"TEXT {args.message}"])
+            print("Queued:", enqueue_lines([f"TEXT {args.message}"]))
         elif args.cmd == "key":
-            enqueue_lines([f"KEY {args.token}"])
+            print("Queued:", enqueue_lines([f"KEY {args.token}"]))
         elif args.cmd == "combo":
-            enqueue_lines([f"COMBO {args.spec}"])
+            print("Queued:", enqueue_lines([f"COMBO {args.spec}"]))
         elif args.cmd == "macro":
             macro_path = Path(args.file)
             macros = load_macros(macro_path)
@@ -90,7 +58,7 @@ def main():
                     f"Macro '{args.name}' must be an array of strings like "
                     f"[\"COMBO CTRL+L\", \"TEXT hello\", \"KEY ENTER\"]"
                 )
-            enqueue_lines(lines)
+            print("Queued:", enqueue_lines(lines))
         elif args.cmd == "list-macros":
             macro_path = Path(args.file)
             macros = load_macros(macro_path)
